@@ -184,7 +184,8 @@ func (o *OpenShift) initDeploymentConfig(name string, service kobject.ServiceCon
 			//UniqueLabelKey: p.Name,
 			Template: &corev1.PodTemplateSpec{
 				ObjectMeta: kapi.ObjectMeta{
-					Labels: transformer.ConfigLabels(name),
+					Labels:      transformer.ConfigLabels(name),
+					Annotations: map[string]string{},
 				},
 				Spec: podSpec,
 			},

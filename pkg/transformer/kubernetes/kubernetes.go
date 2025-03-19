@@ -1153,9 +1153,10 @@ func (k *Kubernetes) ConfigPVCVolumeSource(name string, readonly bool) *api.Volu
 }
 
 // ConfigEnvs configures the environment variables.
-func ConfigEnvs(service kobject.ServiceConfig, opt kobject.ConvertOptions) ([]api.EnvVar, []api.EnvFromSource, error) {
+func ConfigEnvs(service kobject.ServiceConfig, opt kobject.ConvertOptions) ([]api.EnvVar, []api.EnvFromSource, map[string]string, error) {
 	envs := transformer.EnvSort{}
 	envsFrom := []api.EnvFromSource{}
+	envsFromToFilePath := make(map[string]string)
 
 	keysFromEnvFile := make(map[string]bool)
 	// If there is an env_file, use ConfigMaps and add them using EnvFrom
@@ -1178,9 +1179,12 @@ func ConfigEnvs(service kobject.ServiceConfig, opt kobject.ConvertOptions) ([]ap
 			if err != nil {
 				log.Fatalf("Unable to get compose file directory: %s", err)
 			}
-			envLoad, err := GetEnvsFromFile(filepath.Join(workDir, file))
+			envPath := filepath.Join(workDir, file)
+			print("envsFromToFilePath ADDING: " + envName + "\n")
+			envsFromToFilePath[envName] = envName + "-configmap.yaml"
+			envLoad, err := GetEnvsFromFile(envPath)
 			if err != nil {
-				return envs, envsFrom, errors.Wrap(err, "Unable to read env_file")
+				return envs, envsFrom, envsFromToFilePath, errors.Wrap(err, "Unable to read env_file")
 			}
 
 			// Mark environment variable source to env file
@@ -1207,7 +1211,7 @@ func ConfigEnvs(service kobject.ServiceConfig, opt kobject.ConvertOptions) ([]ap
 	// we need this because envs are not populated in any random order
 	// this sorting ensures they are populated in a particular order
 	sort.Stable(envs)
-	return envs, envsFrom, nil
+	return envs, envsFrom, envsFromToFilePath, nil
 }
 
 // ConfigAffinity configures the Affinity.

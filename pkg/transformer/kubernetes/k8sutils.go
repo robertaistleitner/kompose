@@ -547,7 +547,7 @@ func (k *Kubernetes) UpdateKubernetesObjectsMultipleContainers(name string, serv
 // UpdateKubernetesObjects loads configurations to k8s objects
 func (k *Kubernetes) UpdateKubernetesObjects(name string, service kobject.ServiceConfig, opt kobject.ConvertOptions, objects *[]runtime.Object) error {
 	// Configure the environment variables.
-	envs, envsFrom, err := ConfigEnvs(service, opt)
+	envs, envsFrom, envsFromToFilePath, err := ConfigEnvs(service, opt)
 	if err != nil {
 		return errors.Wrap(err, "Unable to load env variables")
 	}
@@ -604,6 +604,10 @@ func (k *Kubernetes) UpdateKubernetesObjects(name string, service kobject.Servic
 		// Configure the HealthCheck
 		template.Spec.Containers[0].LivenessProbe = configProbe(service.HealthChecks.Liveness)
 		template.Spec.Containers[0].ReadinessProbe = configProbe(service.HealthChecks.Readiness)
+
+		for _, envFrom := range envsFrom {
+			template.Annotations["checksum-config/"+envFrom.ConfigMapRef.Name] = "{{ include (print $.Template.BasePath \"/" + envsFromToFilePath[envFrom.ConfigMapRef.Name] + "\") . | sha256sum }}"
+		}
 
 		if service.StopGracePeriod != "" {
 			template.Spec.TerminationGracePeriodSeconds, err = DurationStrToSecondsInt(service.StopGracePeriod)
