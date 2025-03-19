@@ -1180,7 +1180,6 @@ func ConfigEnvs(service kobject.ServiceConfig, opt kobject.ConvertOptions) ([]ap
 				log.Fatalf("Unable to get compose file directory: %s", err)
 			}
 			envPath := filepath.Join(workDir, file)
-			print("envsFromToFilePath ADDING: " + envName + "\n")
 			envsFromToFilePath[envName] = envName + "-configmap.yaml"
 			envLoad, err := GetEnvsFromFile(envPath)
 			if err != nil {
